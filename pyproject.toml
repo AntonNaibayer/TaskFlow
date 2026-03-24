@@ -3,7 +3,7 @@ name = "taskflow"
 version = "0.1.0"
 description = ""
 authors = [
-    {name = "kritspace123",email = "kritspace123@gmail.com"}
+    {name = "AntonNaibayer",email = "anton.naubayer@gmail.com"}
 ]
 requires-python = ">=3.13"
 dependencies = [
