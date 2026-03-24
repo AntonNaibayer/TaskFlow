@@ -1,0 +1,23 @@
+FROM python:3.13-slim
+WORKDIR /back
+
+#запрещает Python создавать файлы кэша .pyc
+ENV PYTHONDONTWRITEBYTECODE=1
+#запрещает буферизацию вывода
+ENV PYTHONUNBUFFERED=1
+#не создавай тут еще одно виртуальное окружение, ставь библиотеки прямо в систему
+ENV POETRY_VIRTUALENVS_CREATE=false
+
+# установка поетри
+RUN pip install poetry
+
+#копируем только эти файлы, чтобы благодаря кэшу докер мог быстро устонавливать зависимоти (если они не изменились)
+COPY pyproject.toml poetry.lock ./
+
+RUN poetry install --no-interaction --no-ansi --no-root
+
+COPY . .
+
+EXPOSE 8000
+
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
