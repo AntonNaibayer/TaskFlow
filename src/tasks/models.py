@@ -1,6 +1,6 @@
 import uuid
 from enum import Enum
-from sqlalchemy import ForeignKey, String, null
+from sqlalchemy import ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.database import Base
@@ -21,4 +21,4 @@ class Task(Base):
     status: Mapped[TaskStatus] = mapped_column(default=TaskStatus.TODO)
     project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("project.id"))
     author_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("user.id"))
-    assignee_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("user.id"), default=null)
+    assignee_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("user.id"), default=None)

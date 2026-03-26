@@ -39,6 +39,7 @@ async def get_tasks(
 @task_router.post(
     "/",
     response_model=TaskResponse,
+    status_code=201
 )
 async def create_task(
     task_data: TaskCreate,
@@ -65,6 +66,7 @@ async def create_task(
         return new_task
     except SQLAlchemyError:
         await session.rollback()
+
         raise HTTPException(status_code=400, detail="Ошибка при сохранении задачи в базу данных")
 
 @task_router.get(
