@@ -13,7 +13,7 @@ from src.tasks.models import Task
 from src.tasks.dependency import get_project_task_or_404
 
 
-task_router = APIRouter(prefix="/tasks", tags=["Работа с задача"])
+task_router = APIRouter(prefix="/projects/{project_id}/tasks", tags=["Работа с задача"])
 
 
 @task_router.get(
