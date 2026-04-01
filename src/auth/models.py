@@ -1,7 +1,8 @@
 from datetime import datetime
+from typing import List
 import uuid
 
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, func
 
 from src.database import Base
@@ -15,3 +16,5 @@ class User(Base):
     username: Mapped[str] = mapped_column(String(30), unique=True)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())#заставляем БД саму ставить время при создании
     is_active: Mapped[bool] = mapped_column(default=True)
+
+    membership: Mapped[List["ProjectMember"]] = relationship(back_populates="user")
