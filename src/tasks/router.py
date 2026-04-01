@@ -1,61 +1,41 @@
 import uuid
 
-from fastapi import APIRouter,  HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 
 from src.database import SessionDep
-from src.auth.dependencies import CurrentUserDep
-from src.projects.models import Project
-from src.projects.dependency import get_user_project_or_404
+from src.projects.models import Project, ProjectMember
+from src.projects.dependency import get_project_or_404, AnyMember, CanManageTask, AdminOnly, OwnerOnly
 from src.tasks.schemas import TaskResponse, TaskCreate, TaskUpdate
 from src.tasks.models import Task
-from src.tasks.dependency import get_project_task_or_404
+from src.tasks.dependency import get_project_task_or_404, is_project_member
 
 
 task_router = APIRouter(prefix="/projects/{project_id}/tasks", tags=["Работа с задача"])
 
 
-@task_router.get(
-    "/",
-    response_model = list[TaskResponse]
-    )
-async def get_tasks(
-    project_id: uuid.UUID,
-    session: SessionDep, 
-    current_user: CurrentUserDep
-):
-    query = select(Task).join(Project).where(
-        Project.id == project_id,
-        Project.owner_id == current_user.id
-    )
-
-    result = await session.execute(query)
-    tasks = result.scalars().all()
-
-    return tasks
-
-
 @task_router.post(
     "/",
     response_model=TaskResponse,
-    status_code=201
+    status_code=status.HTTP_201_CREATED
 )
 async def create_task(
     task_data: TaskCreate,
-    project_id: uuid.UUID,
     session: SessionDep, 
-    current_user: CurrentUserDep
-):
-    await get_user_project_or_404(project_id=project_id, session=session, current_user=current_user)
-    
+    member: ProjectMember = Depends(CanManageTask),
+    project: Project = Depends(get_project_or_404)
+):   
+    if task_data.assignee_id:
+        await is_project_member(project_id=project.id, member_id=task_data.assignee_id, session=session)
+
+
+    task_data_dct = task_data.model_dump(exclude_unset=True)
+
     new_task = Task(
-        title = task_data.title,
-        description = task_data.description,
-        status = task_data.status,
-        project_id = project_id,
-        author_id = current_user.id,
-        assignee_id = task_data.assignee_id
+        **task_data_dct,
+        author_id = member.user_id,
+        project_id = project.id
     )
 
     session.add(new_task)
@@ -67,7 +47,29 @@ async def create_task(
     except SQLAlchemyError:
         await session.rollback()
 
-        raise HTTPException(status_code=400, detail="Ошибка при сохранении задачи в базу данных")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, 
+            detail="Не удалось создать задачу")
+
+
+@task_router.get(
+    "/",
+    response_model = list[TaskResponse]
+    )
+async def get_tasks(
+    session: SessionDep, 
+    member: ProjectMember = Depends(AnyMember),
+    project: Project = Depends(get_project_or_404)
+):
+    query = select(Task).join(Project).where(
+        Project.id == project.id
+    )
+
+    result = await session.execute(query)
+    tasks = result.scalars().all()
+
+    return tasks
+
 
 @task_router.get(
     "/{task_id}",
@@ -75,15 +77,14 @@ async def create_task(
 )
 async def get_task(
     task_id: uuid.UUID,
-    project_id: uuid.UUID,
     session: SessionDep,
-    current_user: CurrentUserDep
+    member: ProjectMember = Depends(AnyMember),
+    project: Project = Depends(get_project_or_404)
 ):
     task = await get_project_task_or_404(
-        project_id=project_id,
+        project_id=project.id,
         task_id=task_id,
         session=session,
-        current_user=current_user
     )
     
     return task
@@ -95,15 +96,17 @@ async def get_task(
 async def update_task(
     task_id: uuid.UUID,
     task_data: TaskUpdate,
-    project_id: uuid.UUID,
     session: SessionDep,
-    current_user: CurrentUserDep,
+    member: ProjectMember = Depends(CanManageTask),
+    project: Project = Depends(get_project_or_404)
 ):
+    if task_data.assignee_id:
+        await is_project_member(project_id=project.id, member_id=task_data.assignee_id, session=session)
+        
     task = await get_project_task_or_404(
-        project_id=project_id,
+        project_id=project.id,
         task_id=task_id,
         session=session,
-        current_user=current_user
     )
     
     update_data = task_data.model_dump(exclude_unset=True)
@@ -117,7 +120,9 @@ async def update_task(
         return task
     except SQLAlchemyError:
         await session.rollback()
-        raise HTTPException(status_code=400, detail="Ошибка при изменеии задачи в базе данных")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, 
+            detail="Ошибка при изменеии задачи в базе данных")
 
 
 @task_router.delete(
@@ -126,15 +131,14 @@ async def update_task(
 )
 async def delete_task(
     task_id: uuid.UUID,
-    project_id: uuid.UUID,
     session: SessionDep,
-    current_user: CurrentUserDep
+    member: ProjectMember = Depends(AdminOnly),
+    project: Project = Depends(get_project_or_404)
 ):
     task = await get_project_task_or_404(
-        project_id=project_id,
+        project_id=project.id,
         task_id=task_id,
         session=session,
-        current_user=current_user
     )
 
     try: 
@@ -142,4 +146,6 @@ async def delete_task(
         await session.commit()
     except SQLAlchemyError:
         await session.rollback()
-        raise HTTPException(status_code=400, detail="Ошибка при удалении задачи из базы данных")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, 
+            detail="Ошибка при удалении задачи из базы данных")
