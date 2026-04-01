@@ -1,3 +1,4 @@
+from __future__ import annotations
 import uuid
 from datetime import datetime
 from typing import List
@@ -19,6 +20,11 @@ class Project(Base):
 
     owner_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("user.id"))
     members: Mapped[List["ProjectMember"]] = relationship(back_populates="project")
+
+    tasks: Mapped[List["Task"]] = relationship(
+        back_populates="project",
+        cascade="all, delete-orphan" # Если проект удален, удалятся и его задачи
+    )
 
 
 class ProjectMember(Base):

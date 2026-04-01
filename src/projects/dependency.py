@@ -1,7 +1,6 @@
 import uuid
 
-from alembic.util import status
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 
 from sqlalchemy import select
 
@@ -26,7 +25,7 @@ async def get_project_or_404(
 
 class RoleChecker:
     def __init__(self, allowed_roles: list[ProjectRole]) -> None:
-        self.allowed_roles = self.allowed_roles
+        self.allowed_roles = allowed_roles
 
     async def __call__(
         self,
@@ -46,7 +45,7 @@ class RoleChecker:
 
         if not member:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_403_FORBIDDEN,
                 detail="Проект не найден"
             )
         
@@ -58,6 +57,7 @@ class RoleChecker:
 
         return member
 
-AnyMember = RoleChecker([ProjectRole.OWNER, ProjectRole.ADMIN, ProjectRole.VIEWER])
+AnyMember = RoleChecker([ProjectRole.OWNER, ProjectRole.ADMIN, ProjectRole.MEMBER, ProjectRole.VIEWER])
+CanManageTask = RoleChecker([ProjectRole.OWNER, ProjectRole.ADMIN, ProjectRole.MEMBER])
 AdminOnly = RoleChecker([ProjectRole.OWNER, ProjectRole.ADMIN])
 OwnerOnly = RoleChecker([ProjectRole.OWNER])
