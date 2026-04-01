@@ -4,7 +4,7 @@ from typing import List
 
 from pydantic import BaseModel, Field, ConfigDict
 
-from projects.enums import ProjectRole
+from src.projects.enums import ProjectRole
 
 
 class ProjectMemberAdd(BaseModel):

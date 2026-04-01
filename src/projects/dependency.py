@@ -4,7 +4,7 @@ from fastapi import HTTPException, status
 
 from sqlalchemy import select
 
-from projects.enums import ProjectRole
+from src.projects.enums import ProjectRole
 from src.database import SessionDep
 from src.auth.models import User
 from src.auth.dependencies import CurrentUserDep

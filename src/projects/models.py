@@ -7,7 +7,7 @@ from sqlalchemy import ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
-from projects.enums import ProjectRole
+from src.projects.enums import ProjectRole
 from src.database import Base
 
 class Project(Base):
@@ -31,8 +31,8 @@ class ProjectMember(Base):
     __tablename__ = "project_member"
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
-    project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey="project.id", ondelete="CASCADE")
-    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey="user.id", ondelete="CASCADE")
+    project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("project.id", ondelete="CASCADE"))
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"))
 
     role: Mapped[ProjectRole] = mapped_column(default=ProjectRole.VIEWER)
     joined_at: Mapped[datetime] = mapped_column(server_default=func.now())

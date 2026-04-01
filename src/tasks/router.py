@@ -9,7 +9,7 @@ from src.common.dependency import PaginationParams
 from src.database import SessionDep
 from src.projects.models import Project, ProjectMember
 from src.projects.dependency import get_project_or_404, AnyMember, CanManageTask, AdminOnly, OwnerOnly
-from src.tasks.schemas import TaskResponse, TaskCreate, TaskUpdate, TaskFilters, TaskHistoryCreate, TaskHistoryResponse
+from src.tasks.schemas import TaskResponse, TaskCreate, TaskUpdate, TaskFilters, TaskHistoryResponse
 from src.tasks.models import Task, TaskHistory
 from src.tasks.dependency import get_project_task_or_404, is_project_member
 from src.tasks.constants import tracked_fields
