@@ -1,0 +1,1 @@
+tracked_fields = {"status", "priority", "assignee_id", "title"}

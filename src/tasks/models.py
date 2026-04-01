@@ -1,5 +1,6 @@
 from datetime import datetime
 import uuid
+from typing import List
 
 from sqlalchemy import ForeignKey, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -26,3 +27,21 @@ class Task(Base):
     update_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=func.now())
 
     project: Mapped["Project"] = relationship(back_populates="tasks")
+    history: Mapped[List["TaskHistory"]] = relationship(
+        back_populates="task",
+        cascade="all, delete-orphan" # Если задача удалена, удалятся и его история
+    )
+
+class TaskHistory(Base):
+    __tablename__ = "task_history"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    task_id: Mapped[uuid.UUID] = mapped_column(ForeignKey('task.id'))
+    change_by: Mapped[uuid.UUID] = mapped_column(ForeignKey('user.id'))
+    field_name: Mapped[str] = mapped_column()
+    old_value: Mapped[str] = mapped_column()
+    new_value: Mapped[str] = mapped_column()
+    create_at: Mapped[datetime] = mapped_column(server_default=func.now())
+
+    task: Mapped["Task"] = relationship(back_populates="history")
+    editor: Mapped["User"] = relationship()

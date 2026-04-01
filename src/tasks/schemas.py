@@ -34,3 +34,18 @@ class TaskResponse(BaseModel):
     update_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+class TaskFilters(BaseModel):
+    status: TaskStatus | None = None
+    priority: TaskPriority | None = None
+    search: str | None = None
+
+
+class TaskHistoryResponse(BaseModel):
+    id: uuid.UUID
+    task_id: uuid.UUID
+    change_by: uuid.UUID
+    field_name: str
+    old_value: str | None
+    new_value: str
+    create_at: datetime
